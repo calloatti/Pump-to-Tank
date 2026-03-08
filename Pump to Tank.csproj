@@ -1,0 +1,99 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <AssemblyName>pumptotank</AssemblyName>
+    <RootNamespace>PumpToTank</RootNamespace>
+    <Platforms>AnyCPU</Platforms>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <TimberbornPath>C:\Program Files (x86)\Steam\steamapps\common\Timberborn\Timberborn_Data\Managed</TimberbornPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="$(TimberbornPath)\Timberborn.*.dll" />
+    <Reference Include="$(TimberbornPath)\Bindito.*.dll" />
+    <Reference Include="$(TimberbornPath)\UnityEngine.*.dll" />
+    <Reference Include="$(TimberbornPath)\Unity.*.dll" />
+
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>$(TimberbornPath)\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Collections.Immutable">
+      <HintPath>$(TimberbornPath)\System.Collections.Immutable.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.CompilerServices.Unsafe">
+      <HintPath>$(TimberbornPath)\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Memory">
+      <HintPath>$(TimberbornPath)\System.Memory.dll</HintPath>
+    </Reference>
+
+    <Reference Include="$(TimberbornPath)\AWSSDK.*.dll" />
+    <Reference Include="$(TimberbornPath)\protobuf-net*.dll" />
+    <Reference Include="$(TimberbornPath)\com.rlabrecque.steamworks.net.dll" />
+    <Reference Include="$(TimberbornPath)\Microsoft.Bcl.AsyncInterfaces.dll" />
+    <Reference Include="$(TimberbornPath)\Microsoft.Extensions.ObjectPool.dll" />
+    
+    <Reference Update="@(Reference)">
+      <Private>False</Private>
+    </Reference>
+    
+    <Compile Remove="misc\**" />
+
+    <Compile Remove="_metadata\**" />
+
+    <EmbeddedResource Remove="misc\**" />
+    <EmbeddedResource Remove="_metadata\**" />
+    <None Remove="misc\**" />
+    <None Remove="_metadata\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Buildings\**\*">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="IlluminationColors\**\*">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="KeyBindingGroups\**\*">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="KeyBindings\**\*">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Localizations\**\*">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="manifest.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Sprites\**\*">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="TemplateCollections\**\*">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="thumbnail.jpg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="ToolGroups\**\*">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  
+    <ItemGroup>
+    <Reference Include="0Harmony">
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\workshop\content\1062090\3284904751\0Harmony.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <Exec Command="powershell -Command &quot;Get-ChildItem '$(TargetDir)' -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force&quot;&#xD;&#xA;powershell -Command &quot;Get-ChildItem -Path '$(USERPROFILE)\Documents\Timberborn\Mods\$(ProjectName)' -Exclude 'workshop_data.json' -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force&quot;" /> 
+  </Target>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="powershell -Command &quot;Copy-Item -Path '$(TargetDir)*' -Destination '$(USERPROFILE)\Documents\Timberborn\Mods\$(ProjectName)' -Recurse -Force&quot;" /> 
+  </Target>
+
+</Project>
