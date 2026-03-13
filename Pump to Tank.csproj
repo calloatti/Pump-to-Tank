@@ -48,7 +48,7 @@
     <None Remove="_metadata\**" />
   </ItemGroup>
 
-  <ItemGroup>
+<ItemGroup>
     <None Update="Buildings\**\*">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

@@ -18,7 +18,8 @@ namespace Calloatti.TankToPump
     public Dictionary<string, float> FluidFractions = new Dictionary<string, float>();
   }
 
-  public class PumpToTankManager : IPostLoadableSingleton
+  // ADDED: IUnloadableSingleton
+  public class PumpToTankManager : IPostLoadableSingleton, IUnloadableSingleton
   {
     public static Dictionary<WaterMover, Inventory> ActivePairs = new Dictionary<WaterMover, Inventory>();
     public static Dictionary<WaterMover, FractionalAccumulator> Accumulators = new Dictionary<WaterMover, FractionalAccumulator>();
@@ -37,12 +38,24 @@ namespace Calloatti.TankToPump
 
     public void PostLoad()
     {
+      // SAFETY CHECK: Ensure dictionaries are wiped in case of an improper unload
+      ActivePairs.Clear();
+      Accumulators.Clear();
+
       _eventBus.Register(this);
       foreach (var building in _entityRegistry.GetEnabled<Building>())
       {
         var pump = building.GetComponent<WaterMover>();
         if (pump != null) TryPairPump(pump);
       }
+    }
+
+    // ADDED: Proper cleanup for static dictionaries and event bus when leaving the game scene
+    public void Unload()
+    {
+      _eventBus.Unregister(this);
+      ActivePairs.Clear();
+      Accumulators.Clear();
     }
 
     [OnEvent]
@@ -76,8 +89,9 @@ namespace Calloatti.TankToPump
         return;
       }
 
+      // ADDED: Added a null check for kvp.Key just in case the pump was destroyed abruptly
       var pumpsToUnpair = ActivePairs
-        .Where(kvp => kvp.Value != null && kvp.Value.GetComponent<BlockObject>() == e.BlockObject)
+        .Where(kvp => kvp.Key != null && kvp.Value != null && kvp.Value.GetComponent<BlockObject>() == e.BlockObject)
         .Select(kvp => kvp.Key).ToList();
 
       foreach (var p in pumpsToUnpair)
@@ -114,7 +128,7 @@ namespace Calloatti.TankToPump
             break;
           }
         }
-        break;
+        break; // If we hit a solid building that isn't a liquid tank, stop checking downwards
       }
     }
 

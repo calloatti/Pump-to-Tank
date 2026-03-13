@@ -1,14 +1,9 @@
 {
   "Name": "Pump to Tank",
-  "Version": "1.0.0",
+  "Version": "1.0.1",
   "Id": "calloatti.pumptotank",
   "MinimumGameVersion": "1.0.0.0",
   "Description": "Mechanical Fluid Pumps fill Tanks",
-  "RequiredMods": [
-    {
-      "Id": "Harmony",
-      "MinVersion": "2.4.1"
-    }
-	],
+  "RequiredMods": [{"Id": "Harmony", "MinVersion": "2.4.1"}],
   "OptionalMods": []
 }
