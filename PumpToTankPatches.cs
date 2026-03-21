@@ -1,10 +1,10 @@
 ﻿using HarmonyLib;
 using System;
-using System.Collections.Generic;
 using System.Reflection;
 using Timberborn.Goods;
 using Timberborn.InventorySystem;
 using Timberborn.WaterBuildings;
+using Timberborn.Particles;
 using UnityEngine;
 
 namespace Calloatti.TankToPump
@@ -14,15 +14,39 @@ namespace Calloatti.TankToPump
   {
     private const float VolToGood = 5.0f;
     private static readonly FieldInfo WaterAddedEventField = AccessTools.Field(typeof(WaterOutput), "WaterAdded");
+    private static readonly FieldInfo ParticlesRunnerField = AccessTools.Field(typeof(WaterMoverParticleController), "_particlesRunner");
 
     [HarmonyPatch(typeof(WaterMover), "IsWaterFlowPossible")]
     [HarmonyPostfix]
     public static void IsWaterFlowPossible_Postfix(WaterMover __instance, ref bool __result)
     {
-      // If paired to a tank, we ALWAYS return true to keep the power draw constant
+      // Per your rule: This stays TRUE so the pump always consumes power and turns the wheel
       if (PumpToTankManager.ActivePairs.ContainsKey(__instance))
       {
         __result = true;
+      }
+    }
+
+    // NEW PATCH: Intercept the particles directly to stop the visual spray when the tank is full
+    [HarmonyPatch(typeof(WaterMoverParticleController), "Tick")]
+    [HarmonyPostfix]
+    public static void ParticleController_Tick_Postfix(WaterMoverParticleController __instance)
+    {
+      var mover = __instance.GetComponent<WaterMover>();
+      if (PumpToTankManager.ActivePairs.TryGetValue(mover, out var tank))
+      {
+        bool hasCapacity = false;
+        if (mover.CleanWaterMovement && tank.Takes("Water") && tank.UnreservedCapacity("Water") > 0)
+          hasCapacity = true;
+        if (mover.ContaminatedWaterMovement && tank.Takes("Badwater") && tank.UnreservedCapacity("Badwater") > 0)
+          hasCapacity = true;
+
+        // If the tank is full, override the game's automatic "Play" command and force the particles to stop
+        if (!hasCapacity)
+        {
+          var runner = ParticlesRunnerField.GetValue(__instance) as ParticlesRunner;
+          runner?.Stop();
+        }
       }
     }
 
@@ -36,72 +60,73 @@ namespace Calloatti.TankToPump
       var output = __instance.GetComponent<WaterOutput>();
       var acc = PumpToTankManager.Accumulators[__instance];
 
-      // Strict Mode Definitions
-      bool pumpCleanOnly = __instance.CleanWaterMovement && !__instance.ContaminatedWaterMovement;
-      bool pumpBadOnly = !__instance.CleanWaterMovement && __instance.ContaminatedWaterMovement;
+      float cleanScaler = GetCleanMovementScaler(__instance, input);
+      float num = waterAmount * cleanScaler;
+      float num2 = waterAmount - num;
 
-      // 1. WATER LOGIC
-      if (pumpCleanOnly && tank.Takes("Water"))
-      {
-        // Flush internal badwater to keep pipe blue
-        if (input.ContaminatedWaterAmount > 0) input.RemoveContaminatedWater(input.ContaminatedWaterAmount);
+      float cleanAvailableSpace = 0f;
+      float badAvailableSpace = 0f;
 
-        // Only transfer if tank has space AND river has water
-        if (tank.UnreservedCapacity("Water") > 0 && input.CleanWaterAmount > 0.0001f)
-          Transfer(input, output, acc, tank, "Water", waterAmount, true);
-        else
-          TriggerVisualizer(output, 0f, 0f); // Keep column empty but gears turning
-      }
-      // 2. BADWATER LOGIC
-      else if (pumpBadOnly && tank.Takes("Badwater"))
+      if (tank.Takes("Water"))
       {
-        // Flush internal clean water to keep pipe red
-        if (input.CleanWaterAmount > 0) input.RemoveCleanWater(input.CleanWaterAmount);
-
-        // Only transfer if tank has space AND river has badwater
-        if (tank.UnreservedCapacity("Badwater") > 0 && input.ContaminatedWaterAmount > 0.0001f)
-          Transfer(input, output, acc, tank, "Badwater", waterAmount, false);
-        else
-          TriggerVisualizer(output, 0f, 0f); // Keep column empty but gears turning
-      }
-      else
-      {
-        // Mismatch or Unfiltered: Pump runs (consumes power) but moves nothing
-        TriggerVisualizer(output, 0f, 0f);
+        float accVol = Mathf.Max(0f, (1f / VolToGood) - (acc.FluidFractions.TryGetValue("Water", out float fw) ? fw / VolToGood : 0f));
+        cleanAvailableSpace = (tank.UnreservedCapacity("Water") / VolToGood) + accVol;
       }
 
-      return false; // Always skip vanilla spill
+      if (tank.Takes("Badwater"))
+      {
+        float accVol = Mathf.Max(0f, (1f / VolToGood) - (acc.FluidFractions.TryGetValue("Badwater", out float fb) ? fb / VolToGood : 0f));
+        badAvailableSpace = (tank.UnreservedCapacity("Badwater") / VolToGood) + accVol;
+      }
+
+      float num3 = Mathf.Max(Mathf.Min(num, input.CleanWaterAmount, cleanAvailableSpace), 0f);
+      float num4 = Mathf.Max(Mathf.Min(num2, input.ContaminatedWaterAmount, badAvailableSpace), 0f);
+
+      // Stop physical river draining if tank is full
+      if (num3 > 0f) input.RemoveCleanWater(num3);
+      if (num4 > 0f) input.RemoveContaminatedWater(num4);
+
+      // Trigger the water column underneath the pump (stops if 0)
+      if (num3 > 0f || num4 > 0f)
+      {
+        TriggerVisualizer(output, num3, num4);
+      }
+
+      // Process Inventory Transfers
+      if (num3 > 0f)
+      {
+        if (!acc.FluidFractions.ContainsKey("Water")) acc.FluidFractions["Water"] = 0f;
+        acc.FluidFractions["Water"] += num3 * VolToGood;
+        ProcessInventory(tank, acc, "Water");
+      }
+      if (num4 > 0f)
+      {
+        if (!acc.FluidFractions.ContainsKey("Badwater")) acc.FluidFractions["Badwater"] = 0f;
+        acc.FluidFractions["Badwater"] += num4 * VolToGood;
+        ProcessInventory(tank, acc, "Badwater");
+      }
+
+      return false;
     }
 
-    private static void Transfer(WaterInput input, WaterOutput output, FractionalAccumulator acc, Inventory tank, string id, float work, bool isClean)
+    private static float GetCleanMovementScaler(WaterMover instance, WaterInput input)
     {
-      float available = isClean ? input.CleanWaterAmount : input.ContaminatedWaterAmount;
-      float toMove = Mathf.Min(work, available);
-
-      if (toMove <= 0) return;
-
-      if (!acc.FluidFractions.ContainsKey(id)) acc.FluidFractions[id] = 0f;
-      acc.FluidFractions[id] += toMove * VolToGood;
-
-      if (isClean)
+      if (instance.CleanWaterMovement)
       {
-        input.RemoveCleanWater(toMove);
-        TriggerVisualizer(output, toMove, 0f);
+        float contaminationPercentage = input.ContaminationPercentage;
+        if (!instance.ContaminatedWaterMovement) return 1f;
+        return 1f - contaminationPercentage;
       }
-      else
-      {
-        input.RemoveContaminatedWater(toMove);
-        TriggerVisualizer(output, 0f, toMove);
-      }
+      return 0f;
+    }
 
-      int actual = Mathf.Min(Mathf.FloorToInt(acc.FluidFractions[id]), tank.UnreservedCapacity(id));
-      if (actual > 0)
+    private static void ProcessInventory(Inventory tank, FractionalAccumulator acc, string id)
+    {
+      int toGive = Mathf.Min(Mathf.FloorToInt(acc.FluidFractions[id]), tank.UnreservedCapacity(id));
+      if (toGive > 0)
       {
-        tank.Give(new GoodAmount(id, actual));
-        acc.FluidFractions[id] -= actual;
-
-        string otherId = (id == "Water") ? "Badwater" : "Water";
-        if (acc.FluidFractions.ContainsKey(otherId)) acc.FluidFractions[otherId] = 0f;
+        tank.Give(new GoodAmount(id, toGive));
+        acc.FluidFractions[id] -= (float)toGive;
       }
     }
 

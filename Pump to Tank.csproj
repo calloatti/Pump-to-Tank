@@ -5,9 +5,27 @@
     <AssemblyName>pumptotank</AssemblyName>
     <RootNamespace>PumpToTank</RootNamespace>
     <Platforms>AnyCPU</Platforms>
+    <LangVersion>10.0</LangVersion>
+    <Nullable>disable</Nullable>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <TimberbornPath>C:\Program Files (x86)\Steam\steamapps\common\Timberborn\Timberborn_Data\Managed</TimberbornPath>
   </PropertyGroup>
+
+  <PropertyGroup>
+    <PublicizerRuntimeStrategies>Unsafe</PublicizerRuntimeStrategies>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Krafs.Publicizer" Version="2.3.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Publicize Include="Timberborn.WaterBuildings" />
+    <Publicize Include="Timberborn.BlockSystem" />
+  </ItemGroup>
 
   <ItemGroup>
     <Reference Include="$(TimberbornPath)\Timberborn.*.dll" />
@@ -37,55 +55,38 @@
     <Reference Update="@(Reference)">
       <Private>False</Private>
     </Reference>
-    
-    <Compile Remove="misc\**" />
 
-    <Compile Remove="_metadata\**" />
+    <Compile Remove=".metadata\**" />
+    <EmbeddedResource Remove=".metadata\**" />
+    <None Remove=".metadata\**" />
 
-    <EmbeddedResource Remove="misc\**" />
-    <EmbeddedResource Remove="_metadata\**" />
-    <None Remove="misc\**" />
-    <None Remove="_metadata\**" />
-  </ItemGroup>
-
-<ItemGroup>
-    <None Update="Buildings\**\*">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="IlluminationColors\**\*">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="KeyBindingGroups\**\*">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="KeyBindings\**\*">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Localizations\**\*">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="manifest.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Sprites\**\*">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="TemplateCollections\**\*">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="thumbnail.jpg">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="ToolGroups\**\*">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    <Compile Remove=".scratch\**" />
+    <EmbeddedResource Remove=".scratch\**" />
+    <None Remove=".scratch\**" />
   </ItemGroup>
   
-    <ItemGroup>
+  <ItemGroup>
     <Reference Include="0Harmony">
       <HintPath>C:\Program Files (x86)\Steam\steamapps\workshop\content\1062090\3284904751\0Harmony.dll</HintPath>
       <Private>False</Private>
     </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Buildings\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
+    <None Update="IlluminationColors\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
+    <None Update="KeyBindingGroups\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
+    <None Update="KeyBindings\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
+    <None Update="Localizations\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
+    <None Update="Resources\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
+    <None Update="Sprites\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
+    <None Update="TemplateCollections\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
+    <None Update="ToolGroups\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
+    
+    <None Update="manifest.json"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
+    <None Update="thumbnail.jpg"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
+    <None Update="thumbnail.png"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
+    <None Update="changelog.txt"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
   </ItemGroup>
 
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
@@ -93,7 +94,7 @@
   </Target>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="powershell -Command &quot;Copy-Item -Path '$(TargetDir)*' -Destination '$(USERPROFILE)\Documents\Timberborn\Mods\$(ProjectName)' -Recurse -Force&quot;" /> 
+    <Exec Command="powershell -Command &quot;New-Item -ItemType Directory -Force -Path '$(USERPROFILE)\Documents\Timberborn\Mods\$(ProjectName)'; Copy-Item -Path '$(TargetDir)*' -Destination '$(USERPROFILE)\Documents\Timberborn\Mods\$(ProjectName)' -Recurse -Force&quot;" /> 
   </Target>
 
 </Project>

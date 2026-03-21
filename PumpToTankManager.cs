@@ -18,7 +18,6 @@ namespace Calloatti.TankToPump
     public Dictionary<string, float> FluidFractions = new Dictionary<string, float>();
   }
 
-  // ADDED: IUnloadableSingleton
   public class PumpToTankManager : IPostLoadableSingleton, IUnloadableSingleton
   {
     public static Dictionary<WaterMover, Inventory> ActivePairs = new Dictionary<WaterMover, Inventory>();
@@ -38,7 +37,6 @@ namespace Calloatti.TankToPump
 
     public void PostLoad()
     {
-      // SAFETY CHECK: Ensure dictionaries are wiped in case of an improper unload
       ActivePairs.Clear();
       Accumulators.Clear();
 
@@ -50,7 +48,6 @@ namespace Calloatti.TankToPump
       }
     }
 
-    // ADDED: Proper cleanup for static dictionaries and event bus when leaving the game scene
     public void Unload()
     {
       _eventBus.Unregister(this);
@@ -62,17 +59,42 @@ namespace Calloatti.TankToPump
     public void OnEnteredFinishedState(EnteredFinishedStateEvent e)
     {
       if (e.BlockObject == null) return;
+
       var pump = e.BlockObject.GetComponent<WaterMover>();
       if (pump != null) { TryPairPump(pump); return; }
 
-      List<Inventory> tempInvs = new List<Inventory>();
-      e.BlockObject.GetComponents<Inventory>(tempInvs);
-      if (tempInvs.Count > 0)
+      var stockpile = e.BlockObject.GetComponent<Stockpile>();
+      if (stockpile == null || stockpile.WhitelistedGoodType != "Liquid") return;
+
+      var occupiedCoords = e.BlockObject.PositionedBlocks.GetOccupiedCoordinates().ToList();
+      foreach (var coord in occupiedCoords)
       {
-        foreach (var building in _entityRegistry.GetEnabled<Building>())
+        if (!IsValidDropZone(e.BlockObject, coord)) continue;
+
+        for (int z = coord.z + 1; z < _blockService.Size.z; z++)
         {
-          var p = building.GetComponent<WaterMover>();
-          if (p != null && !ActivePairs.ContainsKey(p)) TryPairPump(p);
+          var targetPos = new Vector3Int(coord.x, coord.y, z);
+          var potentialPumpObject = _blockService.GetBottomObjectAt(targetPos);
+
+          if (potentialPumpObject == null) continue;
+          if (!potentialPumpObject.IsFinished) break;
+
+          var foundPump = potentialPumpObject.GetComponent<WaterMover>();
+          if (foundPump != null && !ActivePairs.ContainsKey(foundPump))
+          {
+            var output = foundPump.GetComponent<WaterOutput>();
+            if (output != null)
+            {
+              // Fixed InvalidCastException by properly casting to Vector3Int
+              Vector3Int nozzlePos = (Vector3Int)TransformedCoordsField.GetValue(output);
+              if (nozzlePos.x == coord.x && nozzlePos.y == coord.y)
+              {
+                TryPairPump(foundPump);
+                if (ActivePairs.ContainsKey(foundPump)) return;
+              }
+            }
+          }
+          break;
         }
       }
     }
@@ -81,6 +103,7 @@ namespace Calloatti.TankToPump
     public void OnExitedFinishedState(ExitedFinishedStateEvent e)
     {
       if (e.BlockObject == null) return;
+
       var pump = e.BlockObject.GetComponent<WaterMover>();
       if (pump != null)
       {
@@ -89,9 +112,8 @@ namespace Calloatti.TankToPump
         return;
       }
 
-      // ADDED: Added a null check for kvp.Key just in case the pump was destroyed abruptly
       var pumpsToUnpair = ActivePairs
-        .Where(kvp => kvp.Key != null && kvp.Value != null && kvp.Value.GetComponent<BlockObject>() == e.BlockObject)
+        .Where(kvp => kvp.Key != null && kvp.Value != null && kvp.Value.GameObject == e.BlockObject.GameObject)
         .Select(kvp => kvp.Key).ToList();
 
       foreach (var p in pumpsToUnpair)
@@ -105,7 +127,11 @@ namespace Calloatti.TankToPump
     {
       var block = pump.GetComponent<BlockObject>();
       if (block == null || !block.IsFinished) return;
-      var nozzlePos = (Vector3Int)TransformedCoordsField.GetValue(pump.GetComponent<WaterOutput>());
+
+      var output = pump.GetComponent<WaterOutput>();
+      if (output == null) return;
+
+      Vector3Int nozzlePos = (Vector3Int)TransformedCoordsField.GetValue(output);
 
       List<Inventory> invs = new List<Inventory>();
       for (int z = nozzlePos.z - 1; z >= 0; z--)
@@ -128,13 +154,13 @@ namespace Calloatti.TankToPump
             break;
           }
         }
-        break; // If we hit a solid building that isn't a liquid tank, stop checking downwards
+        break;
       }
     }
 
     private bool IsValidDropZone(BlockObject tank, Vector3Int drop)
     {
-      var coords = tank.PositionedBlocks.GetOccupiedCoordinates();
+      var coords = tank.PositionedBlocks.GetOccupiedCoordinates().ToList();
       int minX = coords.Min(c => c.x), maxX = coords.Max(c => c.x);
       int minY = coords.Min(c => c.y), maxY = coords.Max(c => c.y);
       if ((maxX - minX + 1) >= 3 && (maxY - minY + 1) >= 3)
