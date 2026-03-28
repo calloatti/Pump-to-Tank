@@ -4,7 +4,10 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>pumptotank</AssemblyName>
     <RootNamespace>PumpToTank</RootNamespace>
-    <Platforms>AnyCPU</Platforms>
+  </PropertyGroup>
+  
+  <PropertyGroup>
+  <Platforms>AnyCPU</Platforms>
     <LangVersion>10.0</LangVersion>
     <Nullable>disable</Nullable>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
@@ -14,7 +17,7 @@
   <PropertyGroup>
     <PublicizerRuntimeStrategies>Unsafe</PublicizerRuntimeStrategies>
   </PropertyGroup>
-
+  
   <ItemGroup>
     <PackageReference Include="Krafs.Publicizer" Version="2.3.0">
       <PrivateAssets>all</PrivateAssets>
@@ -23,10 +26,22 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Publicize Include="Timberborn.WaterBuildings" />
+    <Publicize Include="Timberborn.AreaSelectionSystem" />
+    <Publicize Include="Timberborn.Automation" />
+    <Publicize Include="Timberborn.AutomationBuildings" />
     <Publicize Include="Timberborn.BlockSystem" />
+    <Publicize Include="Timberborn.Buildings" />
+    <Publicize Include="Timberborn.BuildingsNavigation" />
+    <Publicize Include="Timberborn.BuildingsReachability" />
+    <Publicize Include="Timberborn.EntitySystem" />
+    <Publicize Include="Timberborn.ForestryUI" />
+    <Publicize Include="Timberborn.Gathering" />
+    <Publicize Include="Timberborn.PathSystem" />
+    <Publicize Include="Timberborn.TerrainSystemRendering" />
+    <Publicize Include="Timberborn.ToolButtonSystem" />
+    <Publicize Include="Timberborn.WaterBuildings" />
   </ItemGroup>
-
+  
   <ItemGroup>
     <Reference Include="$(TimberbornPath)\Timberborn.*.dll" />
     <Reference Include="$(TimberbornPath)\Bindito.*.dll" />
@@ -41,9 +56,6 @@
     </Reference>
     <Reference Include="System.Runtime.CompilerServices.Unsafe">
       <HintPath>$(TimberbornPath)\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Memory">
-      <HintPath>$(TimberbornPath)\System.Memory.dll</HintPath>
     </Reference>
 
     <Reference Include="$(TimberbornPath)\AWSSDK.*.dll" />
@@ -78,6 +90,7 @@
     <None Update="KeyBindingGroups\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
     <None Update="KeyBindings\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
     <None Update="Localizations\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
+    <None Update="NaturalResources\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
     <None Update="Resources\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
     <None Update="Sprites\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
     <None Update="TemplateCollections\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
@@ -87,6 +100,11 @@
     <None Update="thumbnail.jpg"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
     <None Update="thumbnail.png"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
     <None Update="changelog.txt"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
+    <None Update="SimpleConfig.json"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include=".metadata\" />
   </ItemGroup>
 
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">

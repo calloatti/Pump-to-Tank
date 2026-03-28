@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Calloatti.TankToPump
 {
-  public class PumpToTankStarter : IModStarter
+  public class ModStarter : IModStarter
   {
     public static readonly string ModId = "calloatti.pumptotank";
 

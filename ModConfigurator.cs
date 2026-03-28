@@ -4,7 +4,7 @@ using Timberborn.SingletonSystem;
 namespace Calloatti.TankToPump
 {
   [Context("Game")]
-  public class PumpToTankConfigurator : Configurator
+  public class ModConfigurator : Configurator
   {
     protected override void Configure()
     {
