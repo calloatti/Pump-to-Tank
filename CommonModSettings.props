@@ -1,0 +1,120 @@
+<Project>
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <Platforms>AnyCPU</Platforms>
+    <LangVersion>10.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <TimberbornPath>C:\Program Files (x86)\Steam\steamapps\common\Timberborn\Timberborn_Data\Managed</TimberbornPath>
+    <PublicizerRuntimeStrategies>Unsafe</PublicizerRuntimeStrategies>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="Krafs.Publicizer" Version="2.3.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Publicize Include="Timberborn.AreaSelectionSystem" />
+    <Publicize Include="Timberborn.Automation" />
+    <Publicize Include="Timberborn.AutomationBuildings" />
+    <Publicize Include="Timberborn.AutomationUI" />
+    <Publicize Include="Timberborn.BlockObjectTools" />
+    <Publicize Include="Timberborn.BlockSystem" />
+    <Publicize Include="Timberborn.Buildings" />
+    <Publicize Include="Timberborn.BuildingsNavigation" />
+    <Publicize Include="Timberborn.BuildingsReachability" />
+    <Publicize Include="Timberborn.EntitySystem" />
+    <Publicize Include="Timberborn.ForestryUI" />
+    <Publicize Include="Timberborn.Gathering" />
+    <Publicize Include="Timberborn.InventorySystem" />
+    <Publicize Include="Timberborn.LevelVisibilitySystem" />
+    <Publicize Include="Timberborn.LevelVisibilitySystemUI" />
+    <Publicize Include="Timberborn.Navigation" />
+    <Publicize Include="Timberborn.PathSystem" />
+    <Publicize Include="Timberborn.SlotSystem" />
+    <Publicize Include="Timberborn.Stockpiles" />
+    <Publicize Include="Timberborn.StockpileVisualization" />
+    <Publicize Include="Timberborn.TerrainSystemRendering" />
+    <Publicize Include="Timberborn.ToolButtonSystem" />
+    <Publicize Include="Timberborn.WaterBuildings" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Reference Include="$(TimberbornPath)\Timberborn.*.dll" />
+    <Reference Include="$(TimberbornPath)\Bindito.*.dll" />
+    <Reference Include="$(TimberbornPath)\UnityEngine.*.dll" />
+    <Reference Include="$(TimberbornPath)\Unity.*.dll" />
+
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>$(TimberbornPath)\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Collections.Immutable">
+      <HintPath>$(TimberbornPath)\System.Collections.Immutable.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.CompilerServices.Unsafe">
+      <HintPath>$(TimberbornPath)\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+    </Reference>
+
+    <Reference Include="$(TimberbornPath)\AWSSDK.*.dll" />
+    <Reference Include="$(TimberbornPath)\protobuf-net*.dll" />
+    <Reference Include="$(TimberbornPath)\com.rlabrecque.steamworks.net.dll" />
+    <Reference Include="$(TimberbornPath)\Microsoft.Bcl.AsyncInterfaces.dll" />
+    <Reference Include="$(TimberbornPath)\Microsoft.Extensions.ObjectPool.dll" />
+    
+    <Reference Update="@(Reference)">
+      <Private>False</Private>
+    </Reference>
+
+    <Compile Remove=".metadata\**" />
+    <EmbeddedResource Remove=".metadata\**" />
+    <None Remove=".metadata\**" />
+    <Compile Remove=".scratch\**" />
+    <EmbeddedResource Remove=".scratch\**" />
+    <None Remove=".scratch\**" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Reference Include="0Harmony">
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\workshop\content\1062090\3284904751\0Harmony.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Buildings\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
+    <None Update="ConstructionBases\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
+    <None Update="CustomCursors\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
+    <None Update="IlluminationColors\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
+    <None Update="KeyBindingGroups\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
+    <None Update="KeyBindings\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
+    <None Update="Localizations\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
+    <None Update="NaturalResources\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
+    <None Update="Resources\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
+    <None Update="Sprites\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
+    <None Update="TemplateCollections\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
+    <None Update="ToolGroups\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
+    
+    <None Update="manifest.json"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
+    <None Update="thumbnail.jpg"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
+    <None Update="thumbnail.png"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
+    <None Update="changelog.txt"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
+    <None Update="simpleconfig.txt"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include=".metadata\" />
+  </ItemGroup>
+
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <Exec Command="powershell -Command &quot;Get-ChildItem '$(TargetDir)' -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force&quot;&#xD;&#xA;powershell -Command &quot;Get-ChildItem -Path '$(USERPROFILE)\Documents\Timberborn\Mods\$(ProjectName)' -Exclude 'workshop_data.json' -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force&quot;" /> 
+  </Target>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="powershell -Command &quot;New-Item -ItemType Directory -Force -Path '$(USERPROFILE)\Documents\Timberborn\Mods\$(ProjectName)'; Copy-Item -Path '$(TargetDir)*' -Destination '$(USERPROFILE)\Documents\Timberborn\Mods\$(ProjectName)' -Recurse -Force&quot;" /> 
+  </Target>
+
+</Project>
