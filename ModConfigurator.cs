@@ -1,5 +1,4 @@
 ﻿using Bindito.Core;
-using Timberborn.SingletonSystem;
 
 namespace Calloatti.TankToPump
 {
@@ -9,6 +8,7 @@ namespace Calloatti.TankToPump
     protected override void Configure()
     {
       Bind<PumpToTankManager>().AsSingleton();
+      Bind<PumpFromTankManager>().AsSingleton();
     }
   }
 }

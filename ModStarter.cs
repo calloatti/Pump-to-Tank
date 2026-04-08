@@ -6,7 +6,7 @@ namespace Calloatti.TankToPump
 {
   public class ModStarter : IModStarter
   {
-    public static readonly string ModId = "calloatti.pumptotank";
+    public static readonly string ModId = "calloatti.TankToPump";
 
     public void StartMod(IModEnvironment modEnvironment)
     {

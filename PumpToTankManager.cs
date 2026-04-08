@@ -1,14 +1,14 @@
-﻿using System.Collections.Generic;
+﻿using HarmonyLib;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using HarmonyLib;
 using Timberborn.BlockSystem;
 using Timberborn.Buildings;
 using Timberborn.EntitySystem;
 using Timberborn.InventorySystem;
 using Timberborn.SingletonSystem;
-using Timberborn.WaterBuildings;
 using Timberborn.Stockpiles;
+using Timberborn.WaterBuildings;
 using UnityEngine;
 
 namespace Calloatti.TankToPump
@@ -22,6 +22,9 @@ namespace Calloatti.TankToPump
   {
     public static Dictionary<WaterMover, Inventory> ActivePairs = new Dictionary<WaterMover, Inventory>();
     public static Dictionary<WaterMover, FractionalAccumulator> Accumulators = new Dictionary<WaterMover, FractionalAccumulator>();
+
+    // Caches the calculated particle lifetime so the patch doesn't have to do heavy math every tick
+    public static Dictionary<WaterMover, float> CustomParticleLengths = new Dictionary<WaterMover, float>();
 
     private readonly IBlockService _blockService;
     private readonly EventBus _eventBus;
@@ -39,6 +42,7 @@ namespace Calloatti.TankToPump
     {
       ActivePairs.Clear();
       Accumulators.Clear();
+      CustomParticleLengths.Clear();
 
       _eventBus.Register(this);
       foreach (var building in _entityRegistry.GetEnabled<Building>())
@@ -53,6 +57,7 @@ namespace Calloatti.TankToPump
       _eventBus.Unregister(this);
       ActivePairs.Clear();
       Accumulators.Clear();
+      CustomParticleLengths.Clear();
     }
 
     [OnEvent]
@@ -85,7 +90,6 @@ namespace Calloatti.TankToPump
             var output = foundPump.GetComponent<WaterOutput>();
             if (output != null)
             {
-              // Fixed InvalidCastException by properly casting to Vector3Int
               Vector3Int nozzlePos = (Vector3Int)TransformedCoordsField.GetValue(output);
               if (nozzlePos.x == coord.x && nozzlePos.y == coord.y)
               {
@@ -107,8 +111,7 @@ namespace Calloatti.TankToPump
       var pump = e.BlockObject.GetComponent<WaterMover>();
       if (pump != null)
       {
-        ActivePairs.Remove(pump);
-        Accumulators.Remove(pump);
+        BreakPair(pump);
         return;
       }
 
@@ -118,8 +121,7 @@ namespace Calloatti.TankToPump
 
       foreach (var p in pumpsToUnpair)
       {
-        ActivePairs.Remove(p);
-        Accumulators.Remove(p);
+        BreakPair(p);
       }
     }
 
@@ -151,11 +153,28 @@ namespace Calloatti.TankToPump
           {
             ActivePairs[pump] = fluidInv;
             Accumulators[pump] = new FractionalAccumulator();
+
+            // --- MATH FIX: Target the floor of the tank instead of the roof ---
+            int tankFloorZ = target.CoordinatesAtBaseZ.z;
+
+            // Replicate vanilla math: availableSpace = Nozzle Z - 0.1f (SafetySpace) - Floor Z
+            float customAvailableSpace = nozzlePos.z - 0.1f - tankFloorZ;
+
+            // startLifetime = availableSpace * LengthMultiplier(0.5f) + NozzleLength(0.1f)
+            CustomParticleLengths[pump] = customAvailableSpace * 0.5f + 0.1f;
+
             break;
           }
         }
         break;
       }
+    }
+
+    private void BreakPair(WaterMover p)
+    {
+      ActivePairs.Remove(p);
+      Accumulators.Remove(p);
+      CustomParticleLengths.Remove(p);
     }
 
     private bool IsValidDropZone(BlockObject tank, Vector3Int drop)
