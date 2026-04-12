@@ -65,7 +65,7 @@ namespace Calloatti.TankToPump
       // Handle running state based on buffer/stock
       if (isPumpToTank && isPumpFromTank)
       {
-        bool hasFluid = fromTank.AmountInStock(configuredFluid) > 0;
+        bool hasFluid = fromTank.UnreservedAmountInStock(configuredFluid) > 0;
         if (!hasFluid && PumpFromTankManager.Accumulators.TryGetValue(__instance, out var acc))
         {
           if (acc.FluidFractions.TryGetValue(configuredFluid, out float f) && f > 0.001f) hasFluid = true;
@@ -78,7 +78,7 @@ namespace Calloatti.TankToPump
       }
       else if (isPumpFromTank)
       {
-        bool hasFluid = fromTank.AmountInStock(configuredFluid) > 0;
+        bool hasFluid = fromTank.UnreservedAmountInStock(configuredFluid) > 0;
         if (!hasFluid && PumpFromTankManager.Accumulators.TryGetValue(__instance, out var acc))
         {
           if (acc.FluidFractions.TryGetValue(configuredFluid, out float f) && f > 0.001f) hasFluid = true;
@@ -114,7 +114,7 @@ namespace Calloatti.TankToPump
         // Buffer intake from source tank
         while (accFrom.FluidFractions[configuredFluid] < waterAmount)
         {
-          if (fromTank.AmountInStock(configuredFluid) >= 1)
+          if (fromTank.UnreservedAmountInStock(configuredFluid) >= 1)
           {
             fromTank.Take(new GoodAmount(configuredFluid, 1));
             accFrom.FluidFractions[configuredFluid] += WorldUnitsPerGood;
@@ -204,7 +204,7 @@ namespace Calloatti.TankToPump
 
         while (acc.FluidFractions[configuredFluid] < waterAmount)
         {
-          if (fromTank.AmountInStock(configuredFluid) >= 1)
+          if (fromTank.UnreservedAmountInStock(configuredFluid) >= 1)
           {
             fromTank.Take(new GoodAmount(configuredFluid, 1));
             acc.FluidFractions[configuredFluid] += WorldUnitsPerGood;

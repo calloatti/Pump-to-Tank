@@ -1,3 +1,5 @@
+1.0.3
+Switched to using UnreservedAmountInStock in source tanks to avoid crashes
 1.0.2
 Integrated Pump From Tank Mod, added Tank to Pump to Tank
 1.0.1
