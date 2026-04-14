@@ -1,6 +1,6 @@
 {
     "Name": "Pump to Tank",
-    "Version": "1.0.3",
+    "Version": "1.0.4",
     "Id": "calloatti.pumptotank",
     "MinimumGameVersion": "1.0.12.10",
     "Description": "Mechanical Fluid Pumps fill Tanks",

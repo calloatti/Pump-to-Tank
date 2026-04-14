@@ -1,3 +1,5 @@
+1.0.4
+Changed IsTileOccupied patch from Prefix to Postfix
 1.0.3
 Switched to using UnreservedAmountInStock in source tanks to avoid crashes
 1.0.2

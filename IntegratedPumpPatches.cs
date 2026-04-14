@@ -259,12 +259,19 @@ namespace Calloatti.TankToPump
 
     // --- PUMP FROM TANK SPECIFIC PATCHES ---
     [HarmonyPatch(typeof(WaterInputCoordinates), "IsTileOccupied")]
-    [HarmonyPrefix]
-    public static bool IsTileOccupied_Prefix(WaterInputCoordinates __instance, Vector3Int coordinates, ref bool __result, IBlockService ____blockService)
+    [HarmonyPostfix] // Changed from Prefix to Postfix
+    public static void IsTileOccupied_Postfix(WaterInputCoordinates __instance, Vector3Int coordinates, ref bool __result, IBlockService ____blockService)
     {
-      if (coordinates.z < 0) { __result = true; return false; }
+      // If vanilla already decided the tile is free, we don't need to do anything
+      if (!__result) return;
 
-      // FIX: Removed .ToList() to prevent memory allocation / Garbage Collection stutter
+      // Narrowed scope: Only apply this override if the placing building is actually a WaterMover
+      var mover = __instance.GetComponent<WaterMover>();
+      if (mover == null) return;
+
+      // Do not allow pipes to go below the map floor (z < 0)
+      if (coordinates.z < 0) return;
+
       IEnumerable<BlockObject> objects = ____blockService.GetObjectsAt(coordinates);
 
       foreach (var obj in objects)
@@ -274,11 +281,15 @@ namespace Calloatti.TankToPump
         var s = obj.GetComponent<Stockpile>();
         if (s != null && s.WhitelistedGoodType == "Liquid")
         {
-          if (coordinates.z >= obj.CoordinatesAtBaseZ.z) { __result = false; return false; }
+          // If the obstruction is our Liquid Tank, and the pipe is above the tank's base, 
+          // override the vanilla result and tell the game the tile is NOT occupied.
+          if (coordinates.z >= obj.CoordinatesAtBaseZ.z)
+          {
+            __result = false;
+            return;
+          }
         }
-        if (!obj.Overridable && !obj.HasComponent<PipeIntersectionAllowerSpec>()) { __result = true; return false; }
       }
-      return true;
     }
 
     // FIX: Added back the visual pipe update to prevent visually stubby pipes on save load
