@@ -91,6 +91,7 @@
 
   <ItemGroup>
     <None Update="Buildings\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
+    <None Update="Configurations\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
     <None Update="ConstructionBases\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
     <None Update="CustomCursors\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
     <None Update="IlluminationColors\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>

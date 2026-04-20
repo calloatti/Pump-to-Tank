@@ -163,14 +163,14 @@ namespace Calloatti.TankToPump
         {
           float accVol = Mathf.Max(0f, (1f / VolToGood) - (acc.FluidFractions.TryGetValue("Water", out float fw) ? fw / VolToGood : 0f));
           float cleanAvailableSpace = (toTank.UnreservedCapacity("Water") / VolToGood) + accVol;
-          num3 = Mathf.Max(Mathf.Min(num, input.CleanWaterAmount, cleanAvailableSpace), 0f);
+          num3 = Mathf.Max(Mathf.Min(num, input.DemandCleanWaterAmount(num), cleanAvailableSpace), 0f);
           if (num3 > 0f) input.RemoveCleanWater(num3);
         }
         else if (configuredFluid == "Badwater")
         {
           float accVol = Mathf.Max(0f, (1f / VolToGood) - (acc.FluidFractions.TryGetValue("Badwater", out float fb) ? fb / VolToGood : 0f));
           float badAvailableSpace = (toTank.UnreservedCapacity("Badwater") / VolToGood) + accVol;
-          num4 = Mathf.Max(Mathf.Min(num2, input.ContaminatedWaterAmount, badAvailableSpace), 0f);
+          num4 = Mathf.Max(Mathf.Min(num2, input.DemandContaminatedWaterAmount(num2), badAvailableSpace), 0f);
           if (num4 > 0f) input.RemoveContaminatedWater(num4);
         }
 

@@ -1,3 +1,5 @@
+1.0.5
+Implemented DemandCleanWaterAmount/DemandContaminatedWaterAmount.
 1.0.4
 Changed IsTileOccupied patch from Prefix to Postfix
 1.0.3
