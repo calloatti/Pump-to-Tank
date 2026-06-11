@@ -8,7 +8,7 @@ using Timberborn.InventorySystem;
 using Timberborn.Particles;
 using Timberborn.Stockpiles;
 using Timberborn.WaterBuildings;
-using Timberborn.WaterBuildingsUI; // NEW: Required for the visualizer patch
+using Timberborn.WaterBuildingsUI;
 using UnityEngine;
 
 namespace Calloatti.TankToPump
@@ -21,15 +21,13 @@ namespace Calloatti.TankToPump
     private static readonly FieldInfo WaterAddedEventField = AccessTools.Field(typeof(WaterOutput), "WaterAdded");
     private static readonly FieldInfo ParticlesRunnerField = AccessTools.Field(typeof(WaterMoverParticleController), "_particlesRunner");
 
-    // HELPER: Strictly enforces that the pump must be set exclusively to Water OR Badwater.
     private static string GetConfiguredFluid(WaterMover pump)
     {
       if (pump.CleanWaterMovement && !pump.ContaminatedWaterMovement) return "Water";
       if (!pump.CleanWaterMovement && pump.ContaminatedWaterMovement) return "Badwater";
-      return null; // Returns null if set to BOTH or NEITHER
+      return null;
     }
 
-    // --- MERGED PATCH: IsWaterFlowPossible ---
     [HarmonyPatch(typeof(WaterMover), "IsWaterFlowPossible")]
     [HarmonyPostfix]
     public static void IsWaterFlowPossible_Postfix(WaterMover __instance, ref bool __result)
@@ -37,32 +35,28 @@ namespace Calloatti.TankToPump
       bool isPumpToTank = PumpToTankManager.ActivePairs.TryGetValue(__instance, out var toTank);
       bool isPumpFromTank = PumpFromTankManager.ActivePairs.TryGetValue(__instance, out var fromTank);
 
-      if (!isPumpToTank && !isPumpFromTank) return; // Let vanilla handle unpaired pumps
+      if (!isPumpToTank && !isPumpFromTank) return;
 
       string configuredFluid = GetConfiguredFluid(__instance);
 
-      // RULE: If set to both fluids or neither, the pump strictly shuts down.
       if (configuredFluid == null)
       {
         __result = false;
         return;
       }
 
-      // RULE: The pump's setting must match the destination tank.
       if (isPumpToTank && !toTank.Takes(configuredFluid))
       {
         __result = false;
         return;
       }
 
-      // RULE: The pump's setting must match the source tank.
       if (isPumpFromTank && !fromTank.Takes(configuredFluid))
       {
         __result = false;
         return;
       }
 
-      // Handle running state based on buffer/stock
       if (isPumpToTank && isPumpFromTank)
       {
         bool hasFluid = fromTank.UnreservedAmountInStock(configuredFluid) > 0;
@@ -74,7 +68,7 @@ namespace Calloatti.TankToPump
       }
       else if (isPumpToTank)
       {
-        __result = true; // Per your rule: Pump-to-tank always consumes power and turns wheel if configured correctly
+        __result = true;
       }
       else if (isPumpFromTank)
       {
@@ -87,7 +81,6 @@ namespace Calloatti.TankToPump
       }
     }
 
-    // --- MERGED PATCH: MoveWater ---
     [HarmonyPatch(typeof(WaterMover), "MoveWater")]
     [HarmonyPrefix]
     public static bool MoveWater_Prefix(WaterMover __instance, float waterAmount)
@@ -95,15 +88,14 @@ namespace Calloatti.TankToPump
       bool isPumpToTank = PumpToTankManager.ActivePairs.TryGetValue(__instance, out var toTank);
       bool isPumpFromTank = PumpFromTankManager.ActivePairs.TryGetValue(__instance, out var fromTank);
 
-      if (!isPumpToTank && !isPumpFromTank) return true; // Let vanilla handle normal water pumping
+      if (!isPumpToTank && !isPumpFromTank) return true;
 
       string configuredFluid = GetConfiguredFluid(__instance);
-      if (configuredFluid == null) return false; // Enforce explicit fluid setting
+      if (configuredFluid == null) return false;
 
-      // 1. COMBINED TANK-TO-TANK LOGIC
       if (isPumpToTank && isPumpFromTank)
       {
-        if (!toTank.Takes(configuredFluid) || !fromTank.Takes(configuredFluid)) return false; // Must match both
+        if (!toTank.Takes(configuredFluid) || !fromTank.Takes(configuredFluid)) return false;
 
         var output = __instance.GetComponent<WaterOutput>();
         var accFrom = PumpFromTankManager.Accumulators[__instance];
@@ -111,12 +103,11 @@ namespace Calloatti.TankToPump
 
         if (!accFrom.FluidFractions.ContainsKey(configuredFluid)) accFrom.FluidFractions[configuredFluid] = 0f;
 
-        // Buffer intake from source tank
         while (accFrom.FluidFractions[configuredFluid] < waterAmount)
         {
           if (fromTank.UnreservedAmountInStock(configuredFluid) >= 1)
           {
-            fromTank.Take(new GoodAmount(configuredFluid, 1));
+            fromTank.TakeExisting(new GoodAmount(configuredFluid, 1));
             accFrom.FluidFractions[configuredFluid] += WorldUnitsPerGood;
           }
           else break;
@@ -142,10 +133,9 @@ namespace Calloatti.TankToPump
         return false;
       }
 
-      // 2. STANDARD PUMP TO TANK LOGIC
       if (isPumpToTank)
       {
-        if (!toTank.Takes(configuredFluid)) return false; // Must match
+        if (!toTank.Takes(configuredFluid)) return false;
 
         var input = __instance.GetComponent<WaterInput>();
         var output = __instance.GetComponent<WaterOutput>();
@@ -158,7 +148,6 @@ namespace Calloatti.TankToPump
         float num3 = 0f;
         float num4 = 0f;
 
-        // Only pull the exact fluid it is configured for
         if (configuredFluid == "Water")
         {
           float accVol = Mathf.Max(0f, (1f / VolToGood) - (acc.FluidFractions.TryGetValue("Water", out float fw) ? fw / VolToGood : 0f));
@@ -192,10 +181,9 @@ namespace Calloatti.TankToPump
         return false;
       }
 
-      // 3. STANDARD PUMP FROM TANK LOGIC
       if (isPumpFromTank)
       {
-        if (!fromTank.Takes(configuredFluid)) return false; // Must match
+        if (!fromTank.Takes(configuredFluid)) return false;
 
         var output = __instance.GetComponent<WaterOutput>();
         var acc = PumpFromTankManager.Accumulators[__instance];
@@ -206,7 +194,7 @@ namespace Calloatti.TankToPump
         {
           if (fromTank.UnreservedAmountInStock(configuredFluid) >= 1)
           {
-            fromTank.Take(new GoodAmount(configuredFluid, 1));
+            fromTank.TakeExisting(new GoodAmount(configuredFluid, 1));
             acc.FluidFractions[configuredFluid] += WorldUnitsPerGood;
           }
           else break;
@@ -228,7 +216,6 @@ namespace Calloatti.TankToPump
       return true;
     }
 
-    // --- PUMP TO TANK SPECIFIC PATCHES ---
     [HarmonyPatch(typeof(WaterMoverParticleController), "Tick")]
     [HarmonyPostfix]
     public static void ParticleController_Tick_Postfix(WaterMoverParticleController __instance)
@@ -238,7 +225,6 @@ namespace Calloatti.TankToPump
       {
         string configuredFluid = GetConfiguredFluid(mover);
 
-        // Stop particles immediately if incorrectly configured
         if (configuredFluid == null || !tank.Takes(configuredFluid))
         {
           var runner = ParticlesRunnerField.GetValue(__instance) as ParticlesRunner;
@@ -248,7 +234,6 @@ namespace Calloatti.TankToPump
 
         bool hasCapacity = tank.UnreservedCapacity(configuredFluid) > 0;
 
-        // If the tank is full, override the game's automatic "Play" command and force the particles to stop
         if (!hasCapacity)
         {
           var runner = ParticlesRunnerField.GetValue(__instance) as ParticlesRunner;
@@ -257,19 +242,15 @@ namespace Calloatti.TankToPump
       }
     }
 
-    // --- PUMP FROM TANK SPECIFIC PATCHES ---
-    [HarmonyPatch(typeof(WaterInputCoordinates), "IsTileOccupied")]
-    [HarmonyPostfix] // Changed from Prefix to Postfix
-    public static void IsTileOccupied_Postfix(WaterInputCoordinates __instance, Vector3Int coordinates, ref bool __result, IBlockService ____blockService)
+    [HarmonyPatch(typeof(WaterInputPipeCoordinates), "IsTileOccupied")]
+    [HarmonyPostfix]
+    public static void IsTileOccupied_Postfix(WaterInputPipeCoordinates __instance, Vector3Int coordinates, ref bool __result, IBlockService ____blockService)
     {
-      // If vanilla already decided the tile is free, we don't need to do anything
       if (!__result) return;
 
-      // Narrowed scope: Only apply this override if the placing building is actually a WaterMover
       var mover = __instance.GetComponent<WaterMover>();
       if (mover == null) return;
 
-      // Do not allow pipes to go below the map floor (z < 0)
       if (coordinates.z < 0) return;
 
       IEnumerable<BlockObject> objects = ____blockService.GetObjectsAt(coordinates);
@@ -281,8 +262,6 @@ namespace Calloatti.TankToPump
         var s = obj.GetComponent<Stockpile>();
         if (s != null && s.WhitelistedGoodType == "Liquid")
         {
-          // If the obstruction is our Liquid Tank, and the pipe is above the tank's base, 
-          // override the vanilla result and tell the game the tile is NOT occupied.
           if (coordinates.z >= obj.CoordinatesAtBaseZ.z)
           {
             __result = false;
@@ -292,7 +271,6 @@ namespace Calloatti.TankToPump
       }
     }
 
-    // FIX: Added back the visual pipe update to prevent visually stubby pipes on save load
     [HarmonyPatch(typeof(WaterInputPipe), "InitializeEntity")]
     [HarmonyPostfix]
     public static void WaterInputPipe_Initialize_Postfix(WaterInputPipe __instance)
@@ -304,7 +282,6 @@ namespace Calloatti.TankToPump
     [HarmonyPrefix]
     public static bool RemoveCleanWater_Prefix(WaterInput __instance)
     {
-      // FIX: Safe null check to prevent ArgumentNullException crash
       var mover = __instance.GetComponent<WaterMover>();
       if (mover == null) return true;
       return !PumpFromTankManager.ActivePairs.ContainsKey(mover);
@@ -314,13 +291,11 @@ namespace Calloatti.TankToPump
     [HarmonyPrefix]
     public static bool RemoveContaminatedWater_Prefix(WaterInput __instance)
     {
-      // FIX: Safe null check to prevent ArgumentNullException crash
       var mover = __instance.GetComponent<WaterMover>();
       if (mover == null) return true;
       return !PumpFromTankManager.ActivePairs.ContainsKey(mover);
     }
 
-    // --- HELPER METHODS ---
     private static float GetCleanMovementScaler(WaterMover instance, WaterInput input)
     {
       if (instance.CleanWaterMovement)
@@ -334,11 +309,10 @@ namespace Calloatti.TankToPump
 
     private static void ProcessInventory(Inventory tank, FractionalAccumulator acc, string id)
     {
-      // FIX: Added +0.001f to combat Unity floating point inaccuracies (e.g. 0.99999 flooring to 0)
       int toGive = Mathf.Min(Mathf.FloorToInt(acc.FluidFractions[id] + 0.001f), tank.UnreservedCapacity(id));
       if (toGive > 0)
       {
-        tank.Give(new GoodAmount(id, toGive));
+        tank.GiveExisting(new GoodAmount(id, toGive));
         acc.FluidFractions[id] -= (float)toGive;
       }
     }
@@ -350,7 +324,6 @@ namespace Calloatti.TankToPump
       eventDelegate?.Invoke(output, new WaterAddition(cleanMoved, badMoved));
     }
 
-    // --- THE NEW FIX: MATHEMATICAL COLUMN LENGTH OVERRIDE ---
     [HarmonyPatch(typeof(WaterOutputParticleLength), "UpdateLifetime")]
     [HarmonyPrefix]
     public static bool UpdateLifetime_Prefix(WaterOutputParticleLength __instance, ref ParticleSystem.MainModule ____particlesMainModule)
@@ -358,12 +331,11 @@ namespace Calloatti.TankToPump
       var mover = __instance.GetComponent<WaterMover>();
       if (mover != null && PumpToTankManager.CustomParticleLengths.TryGetValue(mover, out float customLifetime))
       {
-        // By replacing the value and returning false, we bypass Timberborn's 
-        // terrain raycast entirely, forcing it to use our cached tank-height math.
-        ____particlesMainModule.startLifetime = customLifetime;
+        // 1.1 PHYSICS FIX: Calculate lifetime precisely using the speed multiplier
+        ____particlesMainModule.startLifetime = customLifetime * (1f / ____particlesMainModule.startSpeedMultiplier);
         return false;
       }
-      return true; // If it isn't paired, let Timberborn calculate it normally
+      return true;
     }
   }
 }

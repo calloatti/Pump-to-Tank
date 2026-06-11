@@ -23,7 +23,6 @@ namespace Calloatti.TankToPump
     public static Dictionary<WaterMover, Inventory> ActivePairs = new Dictionary<WaterMover, Inventory>();
     public static Dictionary<WaterMover, FractionalAccumulator> Accumulators = new Dictionary<WaterMover, FractionalAccumulator>();
 
-    // Caches the calculated particle lifetime so the patch doesn't have to do heavy math every tick
     public static Dictionary<WaterMover, float> CustomParticleLengths = new Dictionary<WaterMover, float>();
 
     private readonly IBlockService _blockService;
@@ -154,14 +153,11 @@ namespace Calloatti.TankToPump
             ActivePairs[pump] = fluidInv;
             Accumulators[pump] = new FractionalAccumulator();
 
-            // --- MATH FIX: Target the floor of the tank instead of the roof ---
             int tankFloorZ = target.CoordinatesAtBaseZ.z;
-
-            // Replicate vanilla math: availableSpace = Nozzle Z - 0.1f (SafetySpace) - Floor Z
             float customAvailableSpace = nozzlePos.z - 0.1f - tankFloorZ;
 
-            // startLifetime = availableSpace * LengthMultiplier(0.5f) + NozzleLength(0.1f)
-            CustomParticleLengths[pump] = customAvailableSpace * 0.5f + 0.1f;
+            // FIX: Store raw distance only. Speed is calculated in IntegratedPumpPatches.
+            CustomParticleLengths[pump] = customAvailableSpace;
 
             break;
           }

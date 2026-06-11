@@ -69,7 +69,6 @@ namespace Calloatti.TankToPump
       var p = e.BlockObject.GetComponent<WaterMover>();
       if (p != null) { ActivePairs.Remove(p); Accumulators.Remove(p); return; }
 
-      // Null safety added here as discussed
       var keys = ActivePairs
         .Where(kvp => kvp.Key != null && kvp.Value != null && kvp.Value.GameObject == e.BlockObject.GameObject)
         .Select(kvp => kvp.Key).ToList();
@@ -79,7 +78,7 @@ namespace Calloatti.TankToPump
 
     private void TryPairPump(WaterMover pump)
     {
-      var intake = pump.GetComponent<WaterInputCoordinates>();
+      var intake = pump.GetComponent<WaterInput>();
       if (intake == null) return;
 
       var targetPos = intake.Coordinates;
@@ -95,7 +94,6 @@ namespace Calloatti.TankToPump
 
           var fluidInv = inventories.FirstOrDefault(i => i.Takes("Water") || i.Takes("Badwater"));
 
-          // ADDED: The IsValidIntakeZone check prevents pairing on corners!
           if (fluidInv != null && IsValidIntakeZone(target, targetPos))
           {
             ActivePairs[pump] = fluidInv;
@@ -105,14 +103,12 @@ namespace Calloatti.TankToPump
       }
     }
 
-    // ADDED: The missing corner-check method
     private bool IsValidIntakeZone(BlockObject tank, Vector3Int pos)
     {
       var coords = tank.PositionedBlocks.GetOccupiedCoordinates().ToList();
       int minX = coords.Min(c => c.x), maxX = coords.Max(c => c.x);
       int minY = coords.Min(c => c.y), maxY = coords.Max(c => c.y);
 
-      // Ignore corners for 3x3 or larger tanks for visual consistency
       if ((maxX - minX + 1) >= 3 && (maxY - minY + 1) >= 3)
       {
         return !((pos.x == minX || pos.x == maxX) && (pos.y == minY || pos.y == maxY));
