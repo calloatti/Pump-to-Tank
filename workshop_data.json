@@ -2,12 +2,14 @@
   "ItemId": "3681283725",
   "Name": "Pump to Tank",
   "Visibility": "Public",
-  "UpdateDescription": true,
-  "UpdateVisibility": true,
-  "UpdatePreview": true,
+  "UpdateDescription": false,
+  "UpdateVisibility": false,
+  "UpdatePreview": false,
   "UpdateTags": true,
   "Tags": [
+    "Update 1.1",
     "Update 1.0",
-    "Quality of life"
+    "Quality of life",
+    "Other"
   ]
 }
