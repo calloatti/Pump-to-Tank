@@ -1,17 +1,30 @@
-
-1.0.6
-Update to 1.1.0.0
-1.0.5
-Implemented DemandCleanWaterAmount/DemandContaminatedWaterAmount.
-1.0.4
-Changed IsTileOccupied patch from Prefix to Postfix
-1.0.3
-Switched to using UnreservedAmountInStock in source tanks to avoid crashes
-1.0.2
-Integrated Pump From Tank Mod, added Tank to Pump to Tank
-1.0.1
-Fixed visuals
-Refactored pump to tank pairing
-Fixed potential edge case crash
-1.0.0
-Initial release
+--------------------------------------------------------------------------------
+Game Version: 1.1.0.0
+Mod Version: 1.0.6
+- Update to 1.1.0.0
+--------------------------------------------------------------------------------
+Game Version: 1.1.0.0
+Mod Version: 1.0.5
+- Implemented DemandCleanWaterAmount/DemandContaminatedWaterAmount.
+--------------------------------------------------------------------------------
+Game Version: 1.1.0.0
+Mod Version: 1.0.4
+- Changed IsTileOccupied patch from Prefix to Postfix
+--------------------------------------------------------------------------------
+Game Version: 1.1.0.0
+Mod Version: 1.0.3
+- Switched to using UnreservedAmountInStock in source tanks to avoid crashes
+--------------------------------------------------------------------------------
+Game Version: 1.1.0.0
+Mod Version: 1.0.2
+- Integrated Pump From Tank Mod, added Tank to Pump to Tank
+--------------------------------------------------------------------------------
+Game Version: 1.1.0.0
+Mod Version: 1.0.1
+- Fixed visuals
+- Refactored pump to tank pairing
+- Fixed potential edge case crash
+--------------------------------------------------------------------------------
+Game Version: 1.1.0.0
+Mod Version: 1.0.0
+- Initial release
