@@ -9,8 +9,13 @@
     <TimberbornPath>C:\Program Files (x86)\Steam\steamapps\common\timberborn_main\Timberborn_Data\Managed</TimberbornPath>
     <PublicizerRuntimeStrategies>Unsafe</PublicizerRuntimeStrategies>
     <Deterministic>true</Deterministic>
+    <Version>1.0.0</Version>
+    <FileVersion>1.0.0.0</FileVersion>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <GenerateAssemblyInformationalVersionAttribute>false</GenerateAssemblyInformationalVersionAttribute>
   </PropertyGroup>
-  
+
   <ItemGroup>
     <PackageReference Include="Krafs.Publicizer" Version="2.3.0">
       <PrivateAssets>all</PrivateAssets>
@@ -33,6 +38,7 @@
     <Publicize Include="Timberborn.Buildings" />
     <Publicize Include="Timberborn.BuildingsNavigation" />
     <Publicize Include="Timberborn.BuildingsReachability" />
+    <Publicize Include="Timberborn.CoreUI" />
     <Publicize Include="Timberborn.DecalSystem" />
     <Publicize Include="Timberborn.DwellingSystem" />
     <Publicize Include="Timberborn.EntitySystem" />
@@ -87,13 +93,6 @@
     <Reference Update="@(Reference)">
       <Private>False</Private>
     </Reference>
-
-    <Compile Remove=".metadata\**" />
-    <EmbeddedResource Remove=".metadata\**" />
-    <None Remove=".metadata\**" />
-    <Compile Remove=".scratch\**" />
-    <EmbeddedResource Remove=".scratch\**" />
-    <None Remove=".scratch\**" />
   </ItemGroup>
   
   <ItemGroup>
@@ -123,10 +122,6 @@
     <None Update="thumbnail.png"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
     <None Update="changelog.txt"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
     <None Update="simpleconfig.txt"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include=".metadata\" />
   </ItemGroup>
 
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
