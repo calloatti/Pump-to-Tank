@@ -103,10 +103,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="AssetBundles\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
     <None Update="Buildings\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
     <None Update="Configurations\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
     <None Update="ConstructionBases\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
     <None Update="CustomCursors\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
+    <None Update="GoodVisualization\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
     <None Update="IlluminationColors\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
     <None Update="KeyBindingGroups\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
     <None Update="KeyBindings\**\*"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
@@ -122,14 +124,15 @@
     <None Update="thumbnail.png"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
     <None Update="changelog.txt"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
     <None Update="simpleconfig.txt"><CopyToOutputDirectory>Always</CopyToOutputDirectory></None>
+
   </ItemGroup>
 
-  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="powershell -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\..\prebuild.ps1&quot; -ProjectDir &quot;$(MSBuildProjectDirectory)&quot; -TargetDir &quot;$(TargetDir.TrimEnd('\'))&quot;" /> 
+<Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <Exec Command="powershell -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\..\tools\prebuild.ps1&quot; -ProjectDir &quot;$(MSBuildProjectDirectory)&quot; -TargetDir &quot;$(TargetDir.TrimEnd('\'))&quot;" /> 
   </Target>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="powershell -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\..\postbuild.ps1&quot; -ProjectDir &quot;$(MSBuildProjectDirectory)&quot; -TargetDir &quot;$(TargetDir.TrimEnd('\'))&quot;" /> 
+    <Exec Command="powershell -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\..\tools\postbuild.ps1&quot; -ProjectDir &quot;$(MSBuildProjectDirectory)&quot; -TargetDir &quot;$(TargetDir.TrimEnd('\'))&quot;" /> 
   </Target>
 
 </Project>
